@@ -57,7 +57,6 @@ struct pwrctrl_priv {
 
 	u8	reg_rfoff;
 	u8	reg_pdnmode; /* powerdown mode */
-	u32	rfoff_reason;
 
 	/* RF OFF Level */
 	u32	cur_ps_level;
@@ -93,7 +92,6 @@ struct pwrctrl_priv {
 	enum rt_rf_power_state	change_rfpwrstate;
 
 	u8		wepkeymask;
-	u8		bHWPowerdown;/* if support hw power down */
 	u8		bkeepfwalive;
 };
 
