@@ -117,14 +117,12 @@ static void print_fr(const char *level, struct pt_regs *regs)
 		PRINTREGS(level, regs->fr, "fr", FFMT, i);
 }
 
-void show_regs(struct pt_regs *regs)
+static void __show_regs(struct pt_regs *regs, const char *level)
 {
 	int i, user;
-	const char *level;
 	unsigned long cr30, cr31;
 
 	user = user_mode(regs);
-	level = user ? KERN_DEBUG : KERN_CRIT;
 
 	show_regs_print_info(level);
 
@@ -158,6 +156,11 @@ void show_regs(struct pt_regs *regs)
 
 		parisc_show_stack(current, regs, KERN_DEFAULT);
 	}
+}
+
+void show_regs(struct pt_regs *regs)
+{
+	__show_regs(regs, user_mode(regs) ? KERN_DEBUG : KERN_CRIT);
 }
 
 static DEFINE_RATELIMIT_STATE(_hppa_rs,
@@ -452,7 +455,7 @@ void parisc_terminate(char *msg, struct pt_regs *regs, int code, unsigned long o
 	printk("\n");
 	pr_crit("%s: Code=%d (%s) at addr " RFMT "\n",
 		msg, code, trap_name(code), offset);
-	show_regs(regs);
+	__show_regs(regs, KERN_CRIT);
 
 	spin_unlock(&terminate_lock);
 
@@ -785,7 +788,7 @@ void notrace handle_interruption(int code, struct pt_regs *regs)
 	     * unless pagefault_disable() was called before.
 	     */
 
-	    if (fault_space == 0 && !faulthandler_disabled())
+	    if (faulthandler_disabled() || fault_space == 0)
 	    {
 		/* Clean up and return if in exception table. */
 		if (fixup_exception(regs))
