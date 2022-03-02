@@ -388,6 +388,10 @@ static int msm_drm_init(struct device *dev, const struct drm_driver *drv)
 	if (ret)
 		return ret;
 
+	/* Issue a reset of the entire MDSS */
+	if (priv->mdss && priv->mdss->funcs->reset)
+		priv->mdss->funcs->reset(priv->mdss);
+
 	/* Bind all our sub-components: */
 	ret = component_bind_all(dev, ddev);
 	if (ret)

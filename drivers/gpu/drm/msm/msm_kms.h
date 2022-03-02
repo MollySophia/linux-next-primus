@@ -205,6 +205,7 @@ struct msm_mdss_funcs {
 	int (*enable)(struct msm_mdss *mdss);
 	int (*disable)(struct msm_mdss *mdss);
 	void (*destroy)(struct msm_mdss *mdss);
+	int (*reset)(struct msm_mdss *mdss);
 };
 
 struct msm_mdss {

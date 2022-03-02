@@ -7,6 +7,7 @@
 #include <linux/irqchip.h>
 #include <linux/irqdesc.h>
 #include <linux/irqchip/chained_irq.h>
+#include <linux/reset.h>
 #include "dpu_kms.h"
 
 #define to_dpu_mdss(x) container_of(x, struct dpu_mdss, base)
@@ -31,6 +32,7 @@ struct dpu_mdss {
 	void __iomem *mmio;
 	struct clk_bulk_data *clocks;
 	size_t num_clocks;
+	struct reset_control *reset;
 	struct dpu_irq_controller irq_controller;
 };
 
@@ -197,10 +199,18 @@ static void dpu_mdss_destroy(struct msm_mdss *mdss)
 	dpu_mdss->mmio = NULL;
 }
 
+static int dpu_mdss_reset(struct msm_mdss *mdss)
+{
+	struct dpu_mdss *dpu_mdss = to_dpu_mdss(mdss);
+
+	return reset_control_reset(dpu_mdss->reset);
+}
+
 static const struct msm_mdss_funcs mdss_funcs = {
 	.enable	= dpu_mdss_enable,
 	.disable = dpu_mdss_disable,
 	.destroy = dpu_mdss_destroy,
+	.reset = dpu_mdss_reset,
 };
 
 int dpu_mdss_init(struct platform_device *pdev)
@@ -227,6 +237,13 @@ int dpu_mdss_init(struct platform_device *pdev)
 	}
 	dpu_mdss->num_clocks = ret;
 
+	dpu_mdss->reset = devm_reset_control_get_optional_exclusive(&pdev->dev, NULL);
+	if (IS_ERR(dpu_mdss->reset)) {
+		ret = PTR_ERR(dpu_mdss->reset);
+		DPU_ERROR("failed to acquire mdss reset, ret=%d", ret);
+		goto reset_parse_err;
+	}
+
 	dpu_mdss->base.dev = &pdev->dev;
 	dpu_mdss->base.funcs = &mdss_funcs;
 
@@ -252,6 +269,7 @@ int dpu_mdss_init(struct platform_device *pdev)
 irq_error:
 	_dpu_mdss_irq_domain_fini(dpu_mdss);
 irq_domain_error:
+reset_parse_err:
 clk_parse_err:
 	if (dpu_mdss->mmio)
 		devm_iounmap(&pdev->dev, dpu_mdss->mmio);
