@@ -162,6 +162,11 @@
 			reg = <0x0 0x9a500000 0x0 0x600000>;
 			no-map;
 		};
+
+		cdsp_mem: memory@98900000 {
+			reg = <0x0 0x98900000 0x0 0x1400000>;
+			no-map;
+		};
 	};
 
 	vreg_nvme_0p9: nvme-0p9-regulator {
@@ -404,11 +409,25 @@
 			regulator-max-microvolt = <3072000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
+
+		vreg_l17e_2p9: ldo17 {
+			regulator-min-microvolt = <2960000>;
+			regulator-max-microvolt = <2960000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
 	};
 };
 
-&gpu {
+&dispcc {
 	status = "okay";
+};
+
+&gmu {
+	status = "disabled";
+};
+
+&gpu {
+	status = "disabled";
 
 	zap-shader {
 		memory-region = <&gpu_mem>;
@@ -566,6 +585,12 @@
 	firmware-name = "qcom/sc8180x/qcadsp8180.mbn";
 
 	status = "okay";
+};
+
+&remoteproc_cdsp {
+	status = "okay";
+	memory-region = <&cdsp_mem>;
+	firmware-name = "qcom/sc8180x/qccdsp8180.mbn";
 };
 
 &remoteproc_mpss {
@@ -922,4 +947,42 @@
 			bias-pull-up;
 		};
 	};
+
+	sdc2_default_state: sdc2-default {
+		clk {
+			pins = "sdc2_clk";
+			bias-disable;
+			drive-strength = <16>;
+		};
+
+		cmd {
+			pins = "sdc2_cmd";
+			bias-pull-up;
+			drive-strength = <10>;
+		};
+
+		data {
+			pins = "sdc2_data";
+			bias-pull-up;
+			drive-strength = <10>;
+		};
+	};
+
+	sdc2_card_det_n: sd-card-det-n {
+		pins = "gpio96";
+		function = "gpio";
+		bias-pull-up;
+	};
+};
+
+&sdhc_2 {
+	status = "okay";
+
+	pinctrl-names = "default";
+	pinctrl-0 = < &sdc2_default_state &sdc2_card_det_n>;
+
+	vmmc-supply = <&vreg_l17e_2p9>;
+	vqmmc-supply = <&vreg_l17e_2p9>;
+
+	cd-gpios = <&tlmm 96 GPIO_ACTIVE_LOW>;
 };
