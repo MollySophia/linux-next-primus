@@ -2360,6 +2360,24 @@
 			};
 		};
 
+		sdhc_2: sdhci@8804000 {
+			compatible = "qcom,sdm845-sdhci", "qcom,sdhci-msm-v5";
+			reg = <0 0x08804000 0 0x1000>;
+
+			interrupts = <GIC_SPI 204 IRQ_TYPE_LEVEL_HIGH>,
+				     <GIC_SPI 222 IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "hc_irq", "pwr_irq";
+
+			clocks = <&gcc GCC_SDCC2_AHB_CLK>,
+				 <&gcc GCC_SDCC2_APPS_CLK>;
+			clock-names = "iface", "core";
+			iommus = <&apps_smmu 0xa0 0xf>;
+			power-domains = <&rpmhpd SC8180X_CX>;
+			bus-width = <4>;
+
+			status = "disabled";
+		};
+
 		usb_prim_hsphy: phy@88e2000 {
 			compatible = "qcom,sc8180x-usb-hs-phy",
 				     "qcom,usb-snps-hs-7nm-phy";
@@ -2795,8 +2813,8 @@
 				 <&dispcc DISP_CC_MDSS_MDP_CLK>;
 			clock-names = "iface", "bus", "nrt_bus", "core";
 
-//			assigned-clocks = <&dispcc DISP_CC_MDSS_MDP_CLK>;
-//			assigned-clock-rates = <460000000>;
+			assigned-clocks = <&dispcc DISP_CC_MDSS_MDP_CLK>;
+			assigned-clock-rates = <460000000>;
 
 			resets = <&dispcc DISP_CC_MDSS_CORE_BCR>;
 

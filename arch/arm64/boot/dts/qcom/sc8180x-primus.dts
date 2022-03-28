@@ -36,20 +36,20 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	gpio-keys {
-		compatible = "gpio-keys";
+	// gpio-keys {
+	// 	compatible = "gpio-keys";
 
-		pinctrl-names = "default";
-		pinctrl-0 = <&lid_pin_active>;
+	// 	pinctrl-names = "default";
+	// 	pinctrl-0 = <&lid_pin_active>;
 
-		lid {
-			gpios = <&tlmm 121 GPIO_ACTIVE_HIGH>;
-			linux,input-type = <EV_SW>;
-			linux,code = <SW_LID>;
-			wakeup-source;
-			wakeup-event-action = <EV_ACT_DEASSERTED>;
-		};
-	};
+	// 	lid {
+	// 		gpios = <&tlmm 121 GPIO_ACTIVE_HIGH>;
+	// 		linux,input-type = <EV_SW>;
+	// 		linux,code = <SW_LID>;
+	// 		wakeup-source;
+	// 		wakeup-event-action = <EV_ACT_DEASSERTED>;
+	// 	};
+	// };
 
 	reserved-memory {
 		rmtfs_mem: memory@85500000 {
@@ -83,6 +83,11 @@
 
 		memory@9a500000 {
 			reg = <0x0 0x9a500000 0x0 0x600000>;
+			no-map;
+		};
+
+		cdsp_mem: memory@98900000 {
+			reg = <0x0 0x98900000 0x0 0x1400000>;
 			no-map;
 		};
 	};
@@ -263,6 +268,12 @@
 			regulator-max-microvolt = <3072000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
+
+		vreg_l17e_2p9: ldo17 {
+			regulator-min-microvolt = <2960000>;
+			regulator-max-microvolt = <2960000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
 	};
 };
 
@@ -270,8 +281,54 @@
 	status = "okay";
 };
 
-&gpu {
+&i2c1 {
 	status = "okay";
+	clock-frequency = <400000>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c1_active>, <&i2c1_hid_active>;
+
+	hid@10 {
+		compatible = "hid-over-i2c";
+		reg = <0x10>;
+		hid-descr-addr = <0x1>;
+
+		interrupts-extended = <&tlmm 122 IRQ_TYPE_LEVEL_LOW>;
+	};
+};
+
+&i2c7 {
+	status = "okay";
+	clock-frequency = <400000>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c7_active>, <&i2c7_hid_active>;
+
+	hid@3a {
+		compatible = "hid-over-i2c";
+		reg = <0x3a>;
+		hid-descr-addr = <0x1>;
+
+		interrupt-parent = <&tlmm>;
+		interrupts = <37 IRQ_TYPE_LEVEL_LOW>;
+	};
+
+	hid@15 {
+		compatible = "hid-over-i2c";
+		reg = <0x15>;
+		hid-descr-addr = <0x1>;
+
+		interrupt-parent = <&tlmm>;
+		interrupts = <24 IRQ_TYPE_LEVEL_LOW>;
+	};
+};
+
+&gmu {
+	status = "disabled";
+};
+
+&gpu {
+	status = "disabled";
 
 	zap-shader {
 		memory-region = <&gpu_mem>;
@@ -281,6 +338,46 @@
 
 &mdss {
 	status = "okay";
+};
+
+&mdss_dp0 {
+	status = "disabled";
+
+	data-lanes = <0 1 2 3>;
+
+	pinctrl-names = "default";
+	//pinctrl-0 = <&dp0_sbu_sw_en>;
+
+	mode-switch;
+	svid = /bits/ 16 <0xff01>;
+	// ports {
+	// 	port@2 {
+	// 		reg = <2>;
+	// 		dp0_mode: endpoint {
+	// 			remote-endpoint = <&ucsi_port_0_dp>;
+	// 		};
+	// 	};
+	// };
+};
+
+&mdss_dp1 {
+	status = "disabled";
+
+	data-lanes = <0 1 2 3>;
+
+	pinctrl-names = "default";
+	//pinctrl-0 = <&dp1_sbu_sw_en>;
+
+	mode-switch;
+	svid = /bits/ 16 <0xff01>;
+	// ports {
+	// 	port@2 {
+	// 		reg = <2>;
+	// 		dp1_mode: endpoint {
+	// 			remote-endpoint = <&ucsi_port_1_dp>;
+	// 		};
+	// 	};
+	// };
 };
 
 &mdss_edp {
@@ -355,6 +452,72 @@
 	firmware-name = "qcom/sc8180x/qcadsp8180.mbn";
 };
 
+// &remoteproc_adsp_glink {
+// 	pmic-glink {
+// 		compatible = "qcom,glink-ucsi";
+// 		qcom,glink-channels = "PMIC_RTR_ADSP_APPS";
+
+// 		#address-cells = <1>;
+// 		#size-cells = <0>;
+
+// 		connector@0 {
+// 			compatible = "usb-c-connector";
+// 			reg = <0>;
+// 			power-role = "dual";
+// 			data-role = "dual";
+
+// 			ports {
+// 				#address-cells = <1>;
+// 				#size-cells = <0>;
+// 				port@0 {
+// 					reg = <0>;
+// 					ucsi_port_0_dp: endpoint {
+// 						remote-endpoint = <&dp0_mode>;
+// 					};
+// 				};
+
+// 				// port@1 {
+// 				// 	reg = <1>;
+// 				// 	ucsi_port_0_switch: endpoint {
+// 				// 		remote-endpoint = <&usb_prim_qmp_switch>;
+// 				// 	};
+// 				// };
+// 			};
+// 		};
+
+// 		connector@1 {
+// 			compatible = "usb-c-connector";
+// 			reg = <1>;
+// 			power-role = "dual";
+// 			data-role = "dual";
+
+// 			ports {
+// 				#address-cells = <1>;
+// 				#size-cells = <0>;
+// 				port@0 {
+// 					reg = <0>;
+// 					ucsi_port_1_dp: endpoint {
+// 						remote-endpoint = <&dp1_mode>;
+// 					};
+// 				};
+
+// 				// port@1 {
+// 				// 	reg = <1>;
+// 				// 	ucsi_port_1_switch: endpoint {
+// 				// 		remote-endpoint = <&usb_sec_qmp_switch>;
+// 				// 	};
+// 				// };
+// 			};
+// 		};
+// 	};
+// };
+
+&remoteproc_cdsp {
+	status = "okay";
+	memory-region = <&cdsp_mem>;
+	firmware-name = "qcom/sc8180x/qccdsp8180.mbn";
+};
+
 &remoteproc_mpss {
 	status = "okay";
 	memory-region = <&mpss_mem>;
@@ -364,33 +527,33 @@
 &tlmm {
 	gpio-reserved-ranges = <0 4>, <47 4>, <126 4>;
 
-	dp0_sbu_sw_en: dp0-sbu-sw-en {
-		sel {
-			pins = "gpio100";
-			function = "gpio";
-			output-low;
-		};
+	// dp0_sbu_sw_en: dp0-sbu-sw-en {
+	// 	sel {
+	// 		pins = "gpio100";
+	// 		function = "gpio";
+	// 		output-low;
+	// 	};
 
-		oe-n {
-			pins = "gpio152";
-			function = "gpio";
-			output-low;
-		};
-	};
+	// 	oe-n {
+	// 		pins = "gpio152";
+	// 		function = "gpio";
+	// 		output-low;
+	// 	};
+	// };
 
-	dp1_sbu_sw_en: dp1-sbu-sw-en {
-		sel {
-			pins = "gpio187";
-			function = "gpio";
-			output-low;
-		};
+	// dp1_sbu_sw_en: dp1-sbu-sw-en {
+	// 	sel {
+	// 		pins = "gpio187";
+	// 		function = "gpio";
+	// 		output-low;
+	// 	};
 
-		oe-n {
-			pins = "gpio188";
-			function = "gpio";
-			output-low;
-		};
-	};
+	// 	oe-n {
+	// 		pins = "gpio188";
+	// 		function = "gpio";
+	// 		output-low;
+	// 	};
+	// };
 
 	edp_hpd_active: epd-hpd-active-state {
 		pins = "gpio10";
@@ -450,6 +613,66 @@
 			bias-pull-up;
 		};
 	};
+
+	i2c1_active: i2c1-active-state {
+		pins = "gpio114", "gpio115";
+		function = "qup1";
+
+		bias-pull-up = <1>;
+		drive-strength = <2>;
+	};
+
+	i2c1_hid_active: i2c1-hid-active-state {
+		pins = "gpio122";
+		function = "gpio";
+
+		input-enable;
+		bias-pull-up;
+		drive-strength = <2>;
+	};
+
+	i2c7_active: i2c7-active-state {
+		pins = "gpio98", "gpio99";
+		function = "qup7";
+
+		bias-pull-up;
+		drive-strength = <2>;
+	};
+
+	i2c7_hid_active: i2c7-hid-active-state {
+		pins = "gpio37", "gpio24";
+		function = "gpio";
+
+		input-enable;
+		bias-pull-up;
+		drive-strength = <2>;
+	};
+
+	sdc2_default_state: sdc2-default {
+		clk {
+			pins = "sdc2_clk";
+			bias-disable;
+			drive-strength = <16>;
+		};
+
+		cmd {
+			pins = "sdc2_cmd";
+			bias-pull-up;
+			drive-strength = <10>;
+		};
+
+		data {
+			pins = "sdc2_data";
+			bias-pull-up;
+			drive-strength = <10>;
+		};
+	};
+
+	sdc2_card_det_n: sd-card-det-n {
+		pins = "gpio96";
+		function = "gpio";
+		bias-pull-up;
+	};
 };
 
 &uart12 {
@@ -472,6 +695,18 @@
 		vddch0-supply = <&vreg_l11c_3p3>;
 		max-speed = <3200000>;
 	};
+};
+
+&sdhc_2 {
+	status = "okay";
+
+	pinctrl-names = "default";
+	pinctrl-0 = < &sdc2_default_state &sdc2_card_det_n>;
+
+	vmmc-supply = <&vreg_l17e_2p9>;
+	vqmmc-supply = <&vreg_l17e_2p9>;
+
+	cd-gpios = <&tlmm 96 GPIO_ACTIVE_LOW>;
 };
 
 &ufs_mem_hc {
@@ -506,6 +741,10 @@
 	vdda-pll-supply = <&vreg_l5e_0p88>;
 };
 
+// &usb_prim_qmp_switch {
+// 	remote-endpoint = <&ucsi_port_0_switch>;
+// };
+
 &usb_prim {
 	status = "okay";
 };
@@ -526,6 +765,10 @@
 	vdda-phy-supply = <&vreg_l3c_1p2>;
 	vdda-pll-supply = <&vreg_l5e_0p88>;
 };
+
+// &usb_sec_qmp_switch {
+// 	remote-endpoint = <&ucsi_port_1_switch>;
+// };
 
 &usb_sec {
 	status = "okay";
