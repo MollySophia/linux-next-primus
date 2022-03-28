@@ -36,6 +36,8 @@
 #include <linux/hid.h>
 #include <linux/mutex.h>
 #include <asm/unaligned.h>
+#include <linux/kthread.h>
+#include <linux/gpio/driver.h>
 
 #include "../hid-ids.h"
 #include "i2c-hid.h"
@@ -65,6 +67,25 @@
 
 #define I2C_HID_PWR_ON		0x00
 #define I2C_HID_PWR_SLEEP	0x01
+
+/* polling mode */
+#define I2C_POLLING_DISABLED 0
+#define I2C_POLLING_GPIO_PIN 1
+#define POLLING_INTERVAL 10
+
+static u8 polling_mode;
+module_param(polling_mode, byte, 0444);
+MODULE_PARM_DESC(polling_mode, "How to poll - 0 disabled; 1 based on GPIO pin's status");
+
+static unsigned int polling_interval_active_us = 4000;
+module_param(polling_interval_active_us, uint, 0644);
+MODULE_PARM_DESC(polling_interval_active_us,
+		 "Poll every {polling_interval_active_us} us when the touchpad is active. Default to 4000 us");
+
+static unsigned int polling_interval_idle_ms = 10;
+module_param(polling_interval_idle_ms, uint, 0644);
+MODULE_PARM_DESC(polling_interval_ms,
+		 "Poll every {polling_interval_idle_ms} ms when the touchpad is idle. Default to 10 ms");
 
 /* debug option */
 static bool debug;
@@ -112,6 +133,8 @@ struct i2c_hid {
 
 	wait_queue_head_t	wait;		/* For waiting the interrupt */
 
+	struct task_struct *polling_thread;
+
 	bool			irq_wake_enabled;
 	struct mutex		reset_lock;
 
@@ -141,7 +164,7 @@ static const struct i2c_hid_quirks {
 	 * Sending the wakeup after reset actually break ELAN touchscreen controller
 	 */
 	{ USB_VENDOR_ID_ELAN, HID_ANY_ID,
-		 I2C_HID_QUIRK_NO_WAKEUP_AFTER_RESET |
+		 I2C_HID_QUIRK_NO_WAKEUP_AFTER_RESET | I2C_HID_QUIRK_NO_IRQ_AFTER_RESET |
 		 I2C_HID_QUIRK_BOGUS_IRQ },
 	{ 0, 0 }
 };
@@ -810,7 +833,9 @@ static int i2c_hid_start(struct hid_device *hid)
 		i2c_hid_free_buffers(ihid);
 
 		ret = i2c_hid_alloc_buffers(ihid, bufsize);
-		enable_irq(client->irq);
+
+		if (polling_mode == I2C_POLLING_DISABLED)
+			enable_irq(client->irq);
 
 		if (ret)
 			return ret;
@@ -852,6 +877,85 @@ struct hid_ll_driver i2c_hid_ll_driver = {
 };
 EXPORT_SYMBOL_GPL(i2c_hid_ll_driver);
 
+static int get_gpio_pin_state(struct irq_desc *irq_desc)
+{
+	struct gpio_chip *gc = irq_data_get_irq_chip_data(&irq_desc->irq_data);
+
+	return gc->get(gc, irq_desc->irq_data.hwirq);
+}
+
+static bool interrupt_line_active(struct i2c_client *client)
+{
+	unsigned long trigger_type = irq_get_trigger_type(client->irq);
+	struct irq_desc *irq_desc = irq_data_to_desc(irq_get_irq_data(client->irq));
+
+	/*
+	 * According to Windows Precsiontion Touchpad's specs
+	 * https://docs.microsoft.com/en-us/windows-hardware/design/component-guidelines/windows-precision-touchpad-device-bus-connectivity,
+	 * GPIO Interrupt Assertion Leve could be either ActiveLow or
+	 * ActiveHigh.
+	 */
+	if (trigger_type & IRQF_TRIGGER_LOW)
+		return !get_gpio_pin_state(irq_desc);
+
+	return get_gpio_pin_state(irq_desc);
+}
+
+static int i2c_hid_polling_thread(void *i2c_hid)
+{
+	struct i2c_hid *ihid = i2c_hid;
+	struct i2c_client *client = ihid->client;
+	unsigned int polling_interval_idle;
+
+	while (1) {
+		/*
+		 * re-calculate polling_interval_idle
+		 * so the module parameters polling_interval_idle_ms can be
+		 * changed dynamically through sysfs as polling_interval_active_us
+		 */
+		polling_interval_idle = polling_interval_idle_ms * 1000;
+		if (test_bit(I2C_HID_READ_PENDING, &ihid->flags))
+			usleep_range(50000, 100000);
+
+		if (kthread_should_stop())
+			break;
+
+		while (interrupt_line_active(client)) {
+			i2c_hid_get_input(ihid);
+			usleep_range(polling_interval_active_us,
+				     polling_interval_active_us + 100);
+		}
+
+		usleep_range(polling_interval_idle,
+			     polling_interval_idle + 1000);
+	}
+
+	return 0;
+}
+
+static int i2c_hid_init_polling(struct i2c_hid *ihid)
+{
+	struct i2c_client *client = ihid->client;
+
+	if (!irq_get_trigger_type(client->irq)) {
+		dev_warn(&client->dev,
+			 "Failed to get GPIO Interrupt Assertion Level, could not enable polling mode for %s",
+			 client->name);
+		return -1;
+	}
+
+	ihid->polling_thread = kthread_create(i2c_hid_polling_thread, ihid,
+					      "I2C HID polling thread");
+
+	if (ihid->polling_thread) {
+		pr_info("I2C HID polling thread");
+		wake_up_process(ihid->polling_thread);
+		return 0;
+	}
+
+	return -1;
+}
+
 static int i2c_hid_init_irq(struct i2c_client *client)
 {
 	struct i2c_hid *ihid = i2c_get_clientdata(client);
@@ -875,6 +979,15 @@ static int i2c_hid_init_irq(struct i2c_client *client)
 	}
 
 	return 0;
+}
+
+static void free_irq_or_stop_polling(struct i2c_client *client,
+				     struct i2c_hid *ihid)
+{
+	if (polling_mode != I2C_POLLING_DISABLED)
+		kthread_stop(ihid->polling_thread);
+	else
+		free_irq(client->irq, ihid);
 }
 
 static int i2c_hid_fetch_hid_descriptor(struct i2c_hid *ihid)
@@ -1014,7 +1127,11 @@ int i2c_hid_core_probe(struct i2c_client *client, struct i2chid_ops *ops,
 		goto err_powered;
 	}
 
-	ret = i2c_hid_init_irq(client);
+	if (polling_mode != I2C_POLLING_DISABLED)
+		ret = i2c_hid_init_polling(ihid);
+	else
+		ret = i2c_hid_init_irq(client);
+
 	if (ret < 0)
 		goto err_powered;
 
@@ -1055,7 +1172,7 @@ err_mem_free:
 	hid_destroy_device(hid);
 
 err_irq:
-	free_irq(client->irq, ihid);
+	free_irq_or_stop_polling(client, ihid);
 
 err_powered:
 	i2c_hid_core_power_down(ihid);
@@ -1072,7 +1189,7 @@ int i2c_hid_core_remove(struct i2c_client *client)
 	hid = ihid->hid;
 	hid_destroy_device(hid);
 
-	free_irq(client->irq, ihid);
+	free_irq_or_stop_polling(client, ihid);
 
 	if (ihid->bufsize)
 		i2c_hid_free_buffers(ihid);
@@ -1088,7 +1205,7 @@ void i2c_hid_core_shutdown(struct i2c_client *client)
 	struct i2c_hid *ihid = i2c_get_clientdata(client);
 
 	i2c_hid_set_power(ihid, I2C_HID_PWR_SLEEP);
-	free_irq(client->irq, ihid);
+	free_irq_or_stop_polling(client, ihid);
 
 	i2c_hid_core_shutdown_tail(ihid);
 }
@@ -1110,15 +1227,16 @@ static int i2c_hid_core_suspend(struct device *dev)
 	/* Save some power */
 	i2c_hid_set_power(ihid, I2C_HID_PWR_SLEEP);
 
-	disable_irq(client->irq);
-
-	if (device_may_wakeup(&client->dev)) {
-		wake_status = enable_irq_wake(client->irq);
-		if (!wake_status)
-			ihid->irq_wake_enabled = true;
-		else
-			hid_warn(hid, "Failed to enable irq wake: %d\n",
-				wake_status);
+	if (polling_mode == I2C_POLLING_DISABLED) {
+		disable_irq(client->irq);
+		if (device_may_wakeup(&client->dev)) {
+			wake_status = enable_irq_wake(client->irq);
+			if (!wake_status)
+				ihid->irq_wake_enabled = true;
+			else
+				hid_warn(hid, "Failed to enable irq wake: %d\n",
+					 wake_status);
+		}
 	} else {
 		i2c_hid_core_power_down(ihid);
 	}
@@ -1134,7 +1252,7 @@ static int i2c_hid_core_resume(struct device *dev)
 	struct hid_device *hid = ihid->hid;
 	int wake_status;
 
-	if (!device_may_wakeup(&client->dev)) {
+	if (!device_may_wakeup(&client->dev) || polling_mode != I2C_POLLING_DISABLED) {
 		i2c_hid_core_power_up(ihid);
 	} else if (ihid->irq_wake_enabled) {
 		wake_status = disable_irq_wake(client->irq);
@@ -1145,7 +1263,8 @@ static int i2c_hid_core_resume(struct device *dev)
 				wake_status);
 	}
 
-	enable_irq(client->irq);
+	if (polling_mode == I2C_POLLING_DISABLED)
+		enable_irq(client->irq);
 
 	/* Instead of resetting device, simply powers the device on. This
 	 * solves "incomplete reports" on Raydium devices 2386:3118 and
