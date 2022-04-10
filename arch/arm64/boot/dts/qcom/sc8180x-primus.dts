@@ -21,6 +21,7 @@
 	aliases {
 		serial0 = &uart12;
 		serial1 = &uart13;
+		mmc0 = &sdhc_2;
 	};
 
 	backlight: backlight {
@@ -169,6 +170,12 @@
 			regulator-max-microvolt = <2100000>;
 		};
 
+		// vreg_l6a_1p2: ldo6 {
+		// 	regulator-min-microvolt = <1200000>;
+		// 	regulator-max-microvolt = <1200000>;
+		// 	regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		// };
+
 		vreg_l7a_1p8: ldo7 {
 			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <1800000>;
@@ -211,11 +218,29 @@
 			regulator-always-on;
 		};
 
+		// vreg_l2c_1p2: ldo2 {
+		// 	regulator-min-microvolt = <1200000>;
+		// 	regulator-max-microvolt = <1200000>;
+		// 	regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		// };
+
 		vreg_l3c_1p2: ldo3 {
 			regulator-min-microvolt = <1200000>;
 			regulator-max-microvolt = <1200000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
+
+		// vreg_l6c: ldo6 {
+		// 	regulator-min-microvolt = <1800000>;
+		// 	regulator-max-microvolt = <2950000>;
+		// 	regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		// };
+
+		// vreg_l9c_2p9: ldo9 {
+		// 	regulator-min-microvolt = <2504000>;
+		// 	regulator-max-microvolt = <2904000>;
+		// 	regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		// };
 
 		vreg_l10c_3p3: ldo10 {
 			regulator-min-microvolt = <3000000>;
@@ -277,11 +302,35 @@
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
+		// vreg_l9e_0p88: ldo9 {
+		// 	regulator-min-microvolt = <880000>;
+		// 	regulator-max-microvolt = <880000>;
+		// 	regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		// };
+
 		vreg_l10e_2p9: ldo10 {
 			regulator-min-microvolt = <2904000>;
 			regulator-max-microvolt = <2904000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
+
+		// vreg_l12e_1p8: ldo12 {
+		// 	regulator-min-microvolt = <1800000>;
+		// 	regulator-max-microvolt = <1800000>;
+		// 	regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		// };
+
+		// vreg_l14e_1p8: ldo14 {
+		// 	regulator-min-microvolt = <1800000>;
+		// 	regulator-max-microvolt = <1800000>;
+		// 	regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		// };
+
+		// vreg_l15e_1p8: ldo15 {
+		// 	regulator-min-microvolt = <1800000>;
+		// 	regulator-max-microvolt = <1800000>;
+		// 	regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		// };
 
 		vreg_l16e_3p0: ldo16 {
 			regulator-min-microvolt = <3072000>;
@@ -361,43 +410,43 @@
 };
 
 &mdss_dp0 {
-	status = "disabled";
+	status = "okay";
 
 	data-lanes = <0 1 2 3>;
 
 	pinctrl-names = "default";
-	//pinctrl-0 = <&dp0_sbu_sw_en>;
+	pinctrl-0 = <&dp0_sbu_sw_en>;
 
 	mode-switch;
 	svid = /bits/ 16 <0xff01>;
-	// ports {
-	// 	port@2 {
-	// 		reg = <2>;
-	// 		dp0_mode: endpoint {
-	// 			remote-endpoint = <&ucsi_port_0_dp>;
-	// 		};
-	// 	};
-	// };
+	ports {
+		port@2 {
+			reg = <2>;
+			dp0_mode: endpoint {
+				remote-endpoint = <&ucsi_port_0_dp>;
+			};
+		};
+	};
 };
 
 &mdss_dp1 {
-	status = "disabled";
+	status = "okay";
 
 	data-lanes = <0 1 2 3>;
 
 	pinctrl-names = "default";
-	//pinctrl-0 = <&dp1_sbu_sw_en>;
+	pinctrl-0 = <&dp1_sbu_sw_en>;
 
 	mode-switch;
 	svid = /bits/ 16 <0xff01>;
-	// ports {
-	// 	port@2 {
-	// 		reg = <2>;
-	// 		dp1_mode: endpoint {
-	// 			remote-endpoint = <&ucsi_port_1_dp>;
-	// 		};
-	// 	};
-	// };
+	ports {
+		port@2 {
+			reg = <2>;
+			dp1_mode: endpoint {
+				remote-endpoint = <&ucsi_port_1_dp>;
+			};
+		};
+	};
 };
 
 &mdss_edp {
@@ -472,65 +521,65 @@
 	firmware-name = "qcom/sc8180x/qcadsp8180.mbn";
 };
 
-// &remoteproc_adsp_glink {
-// 	pmic-glink {
-// 		compatible = "qcom,glink-ucsi";
-// 		qcom,glink-channels = "PMIC_RTR_ADSP_APPS";
+&remoteproc_adsp_glink {
+	pmic-glink {
+		compatible = "qcom,glink-ucsi";
+		qcom,glink-channels = "PMIC_RTR_ADSP_APPS";
 
-// 		#address-cells = <1>;
-// 		#size-cells = <0>;
+		#address-cells = <1>;
+		#size-cells = <0>;
 
-// 		connector@0 {
-// 			compatible = "usb-c-connector";
-// 			reg = <0>;
-// 			power-role = "dual";
-// 			data-role = "dual";
+		connector@0 {
+			compatible = "usb-c-connector";
+			reg = <0>;
+			power-role = "dual";
+			data-role = "dual";
 
-// 			ports {
-// 				#address-cells = <1>;
-// 				#size-cells = <0>;
-// 				port@0 {
-// 					reg = <0>;
-// 					ucsi_port_0_dp: endpoint {
-// 						remote-endpoint = <&dp0_mode>;
-// 					};
-// 				};
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				port@0 {
+					reg = <0>;
+					ucsi_port_0_dp: endpoint {
+						remote-endpoint = <&dp0_mode>;
+					};
+				};
 
-// 				// port@1 {
-// 				// 	reg = <1>;
-// 				// 	ucsi_port_0_switch: endpoint {
-// 				// 		remote-endpoint = <&usb_prim_qmp_switch>;
-// 				// 	};
-// 				// };
-// 			};
-// 		};
+				port@1 {
+					reg = <1>;
+					ucsi_port_0_switch: endpoint {
+						remote-endpoint = <&usb_prim_qmp_switch>;
+					};
+				};
+			};
+		};
 
-// 		connector@1 {
-// 			compatible = "usb-c-connector";
-// 			reg = <1>;
-// 			power-role = "dual";
-// 			data-role = "dual";
+		connector@1 {
+			compatible = "usb-c-connector";
+			reg = <1>;
+			power-role = "dual";
+			data-role = "dual";
 
-// 			ports {
-// 				#address-cells = <1>;
-// 				#size-cells = <0>;
-// 				port@0 {
-// 					reg = <0>;
-// 					ucsi_port_1_dp: endpoint {
-// 						remote-endpoint = <&dp1_mode>;
-// 					};
-// 				};
+			ports {
+				#address-cells = <1>;
+				#size-cells = <0>;
+				port@0 {
+					reg = <0>;
+					ucsi_port_1_dp: endpoint {
+						remote-endpoint = <&dp1_mode>;
+					};
+				};
 
-// 				// port@1 {
-// 				// 	reg = <1>;
-// 				// 	ucsi_port_1_switch: endpoint {
-// 				// 		remote-endpoint = <&usb_sec_qmp_switch>;
-// 				// 	};
-// 				// };
-// 			};
-// 		};
-// 	};
-// };
+				port@1 {
+					reg = <1>;
+					ucsi_port_1_switch: endpoint {
+						remote-endpoint = <&usb_sec_qmp_switch>;
+					};
+				};
+			};
+		};
+	};
+};
 
 &remoteproc_cdsp {
 	status = "okay";
@@ -547,33 +596,33 @@
 &tlmm {
 	gpio-reserved-ranges = <0 4>, <47 4>, <126 4>;
 
-	// dp0_sbu_sw_en: dp0-sbu-sw-en {
-	// 	sel {
-	// 		pins = "gpio100";
-	// 		function = "gpio";
-	// 		output-low;
-	// 	};
+	dp0_sbu_sw_en: dp0-sbu-sw-en {
+		sel {
+			pins = "gpio100";
+			function = "gpio";
+			output-low;
+		};
 
-	// 	oe-n {
-	// 		pins = "gpio152";
-	// 		function = "gpio";
-	// 		output-low;
-	// 	};
-	// };
+		oe-n {
+			pins = "gpio152";
+			function = "gpio";
+			output-low;
+		};
+	};
 
-	// dp1_sbu_sw_en: dp1-sbu-sw-en {
-	// 	sel {
-	// 		pins = "gpio187";
-	// 		function = "gpio";
-	// 		output-low;
-	// 	};
+	dp1_sbu_sw_en: dp1-sbu-sw-en {
+		sel {
+			pins = "gpio187";
+			function = "gpio";
+			output-low;
+		};
 
-	// 	oe-n {
-	// 		pins = "gpio188";
-	// 		function = "gpio";
-	// 		output-low;
-	// 	};
-	// };
+		oe-n {
+			pins = "gpio188";
+			function = "gpio";
+			output-low;
+		};
+	};
 
 	edp_hpd_active: epd-hpd-active-state {
 		pins = "gpio10";
@@ -672,19 +721,16 @@
 		clk {
 			pins = "sdc2_clk";
 			bias-disable;
-			drive-strength = <16>;
 		};
 
 		cmd {
 			pins = "sdc2_cmd";
 			bias-pull-up;
-			drive-strength = <10>;
 		};
 
 		data {
 			pins = "sdc2_data";
 			bias-pull-up;
-			drive-strength = <10>;
 		};
 	};
 
@@ -727,6 +773,9 @@
 	vqmmc-supply = <&vreg_l17e_2p9>;
 
 	cd-gpios = <&tlmm 96 GPIO_ACTIVE_LOW>;
+
+	no-1-8-v;
+	cd-inverted;
 };
 
 &ufs_mem_hc {
@@ -761,9 +810,9 @@
 	vdda-pll-supply = <&vreg_l5e_0p88>;
 };
 
-// &usb_prim_qmp_switch {
-// 	remote-endpoint = <&ucsi_port_0_switch>;
-// };
+&usb_prim_qmp_switch {
+	remote-endpoint = <&ucsi_port_0_switch>;
+};
 
 &usb_prim {
 	status = "okay";
@@ -786,9 +835,9 @@
 	vdda-pll-supply = <&vreg_l5e_0p88>;
 };
 
-// &usb_sec_qmp_switch {
-// 	remote-endpoint = <&ucsi_port_1_switch>;
-// };
+&usb_sec_qmp_switch {
+	remote-endpoint = <&ucsi_port_1_switch>;
+};
 
 &usb_sec {
 	status = "okay";
