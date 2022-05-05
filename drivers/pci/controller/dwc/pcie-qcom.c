@@ -1530,11 +1530,6 @@ static const struct qcom_pcie_cfg sm8250_cfg = {
 	.has_ddrss_sf_tbu_clk = true,
 };
 
-static const struct qcom_pcie_cfg sc8180x_cfg = {
-	.ops = &ops_1_9_0,
-	.has_tbu_clk = true,
-};
-
 static const struct qcom_pcie_cfg sm8450_pcie0_cfg = {
 	.ops = &ops_1_9_0,
 	.has_ddrss_sf_tbu_clk = true,
