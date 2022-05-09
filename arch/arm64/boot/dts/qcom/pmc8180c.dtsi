@@ -79,7 +79,7 @@
 			};
 
 			vcoin@85 {
-				reg = <0x85>;
+				reg = <ADC5_VCOIN>;
 				qcom,pre-scaling = <1 1>;
 				label = "vcoin2";
 			};
@@ -139,7 +139,7 @@
 			};
 
 			vcoin@85 {
-				reg = <0x85>;
+				reg = <ADC5_VCOIN>;
 				qcom,pre-scaling = <1 1>;
 				label = "vcoin";
 			};

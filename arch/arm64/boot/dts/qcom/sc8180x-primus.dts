@@ -27,7 +27,7 @@
 	backlight: backlight {
 		compatible = "pwm-backlight";
 		pwms = <&pmc8180c_lpg 4 1000000>;
-		enable-gpios = <&pmc8180c_gpios 8 GPIO_ACTIVE_HIGH>;
+		enable-gpios = <&pmc8180c_gpios 1 GPIO_ACTIVE_HIGH>;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&bl_pwm_default_state>;
@@ -37,20 +37,30 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	// gpio-keys {
-	// 	compatible = "gpio-keys";
+	gpio-keys {
+		compatible = "gpio-keys";
 
-	// 	pinctrl-names = "default";
-	// 	pinctrl-0 = <&lid_pin_active>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&lid_pin_active>, <&vol_up_pin_a>;
 
-	// 	lid {
-	// 		gpios = <&tlmm 121 GPIO_ACTIVE_HIGH>;
-	// 		linux,input-type = <EV_SW>;
-	// 		linux,code = <SW_LID>;
-	// 		wakeup-source;
-	// 		wakeup-event-action = <EV_ACT_DEASSERTED>;
-	// 	};
-	// };
+		lid {
+			gpios = <&tlmm 121 GPIO_ACTIVE_HIGH>;
+			linux,input-type = <EV_SW>;
+			linux,code = <SW_LID>;
+			wakeup-source;
+			wakeup-event-action = <EV_ACT_DEASSERTED>;
+		};
+
+		volume-up {
+			label = "volume_up";
+			gpios = <&pmc8180_gpios 6 GPIO_ACTIVE_LOW>;
+			linux,input-type = <1>;
+			linux,code = <KEY_VOLUMEUP>;
+			gpio-key,wakeup;
+			debounce-interval = <15>;
+			linux,can-disable;
+		};
+	};
 
 	reserved-memory {
 		rmtfs_mem: memory@85500000 {
@@ -350,19 +360,38 @@
 	status = "okay";
 };
 
+&gmu {
+	status = "okay";
+};
+
+&gpu {
+	status = "okay";
+
+	zap-shader {
+		memory-region = <&gpu_mem>;
+		firmware-name = "qcom/sc8180x/qcdxkmsuc8180.mbn";
+	};
+};
+
 &i2c1 {
 	status = "okay";
-	clock-frequency = <400000>;
+	clock-frequency = <100000>;
 
 	pinctrl-names = "default";
-	pinctrl-0 = <&i2c1_active>, <&i2c1_hid_active>;
+	pinctrl-0 = <&i2c1_active>;
 
 	hid@10 {
 		compatible = "hid-over-i2c";
 		reg = <0x10>;
-		hid-descr-addr = <0x1>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&ts_int_l>, <&ts_reset_l>;
 
-		interrupts-extended = <&tlmm 122 IRQ_TYPE_LEVEL_LOW>;
+		interrupt-parent = <&tlmm>;
+		interrupts = <122 IRQ_TYPE_LEVEL_LOW>;
+		// interrupts-extended = <&tlmm 122 IRQ_TYPE_LEVEL_LOW>;
+
+		post-power-on-delay-ms = <20>;
+		hid-descr-addr = <0x0001>;
 	};
 };
 
@@ -392,16 +421,18 @@
 	};
 };
 
-&gmu {
+&i2c19 {
 	status = "okay";
-};
+	clock-frequency = <100000>;
 
-&gpu {
-	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c19_active>;
 
-	zap-shader {
-		memory-region = <&gpu_mem>;
-		firmware-name = "qcom/sc8180x/qcdxkmsuc8180.mbn";
+	sbs-battery@b {
+		compatible = "sbs,sbs-battery";
+		reg = <0xb>;
+		sbs,i2c-retry-count = <2>;
+		sbs,poll-retry-count = <10>;
 	};
 };
 
@@ -503,6 +534,26 @@
 	status = "okay";
 };
 
+&pon_pwrkey {
+	status = "okay";
+};
+
+&pon_resin {
+	status = "okay";
+
+	linux,code = <KEY_VOLUMEDOWN>;
+};
+
+&pmc8180_gpios {
+	vol_up_pin_a: vol-up-active {
+		pins = "gpio6";
+		function = "normal";
+		bias-pull-up;
+		input-enable;
+		qcom,drive-strength = <3>;
+	};
+};
+
 &qupv3_id_0 {
 	status = "okay";
 };
@@ -591,6 +642,21 @@
 	status = "okay";
 	memory-region = <&mpss_mem>;
 	firmware-name = "qcom/sc8180x/qcmpss8180.mbn";
+};
+
+&sdhc_2 {
+	status = "okay";
+
+	pinctrl-names = "default";
+	pinctrl-0 = < &sdc2_default_state &sdc2_card_det_n>;
+
+	vmmc-supply = <&vreg_l17e_2p9>;
+	vqmmc-supply = <&vreg_l17e_2p9>;
+
+	cd-gpios = <&tlmm 96 GPIO_ACTIVE_LOW>;
+
+	no-1-8-v;
+	cd-inverted;
 };
 
 &tlmm {
@@ -691,11 +757,20 @@
 		drive-strength = <2>;
 	};
 
-	i2c1_hid_active: i2c1-hid-active-state {
+	ts_int_l: ts-int-pin {
 		pins = "gpio122";
 		function = "gpio";
 
 		input-enable;
+		bias-pull-up;
+		drive-strength = <2>;
+	};
+
+	ts_reset_l: ts-reset-pin {
+		pins = "gpio54";
+		function = "gpio";
+
+		output-high;
 		bias-pull-up;
 		drive-strength = <2>;
 	};
@@ -713,6 +788,14 @@
 		function = "gpio";
 
 		input-enable;
+		bias-pull-up;
+		drive-strength = <2>;
+	};
+
+	i2c19_active: i2c19-active-state {
+		pins = "gpio180", "gpio181";
+		function = "qup19";
+
 		bias-pull-up;
 		drive-strength = <2>;
 	};
@@ -761,21 +844,6 @@
 		vddch0-supply = <&vreg_l11c_3p3>;
 		max-speed = <3200000>;
 	};
-};
-
-&sdhc_2 {
-	status = "okay";
-
-	pinctrl-names = "default";
-	pinctrl-0 = < &sdc2_default_state &sdc2_card_det_n>;
-
-	vmmc-supply = <&vreg_l17e_2p9>;
-	vqmmc-supply = <&vreg_l17e_2p9>;
-
-	cd-gpios = <&tlmm 96 GPIO_ACTIVE_LOW>;
-
-	no-1-8-v;
-	cd-inverted;
 };
 
 &ufs_mem_hc {
