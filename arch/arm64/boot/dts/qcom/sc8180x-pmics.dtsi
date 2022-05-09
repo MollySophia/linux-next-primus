@@ -185,8 +185,8 @@
 				label = "vref_1p25";
 			};
 
-			channel@85 {
-				reg = <0x85>;
+			vcoin@85 {
+				reg = <ADC5_VCOIN>;
 				qcom,pre-scaling = <1 1>;
 				label = "vcoin2";
 			};
@@ -233,8 +233,8 @@
 				label = "vref_1p25";
 			};
 
-			channel@85 {
-				reg = <0x85>;
+			vcoin@85 {
+				reg = <ADC5_VCOIN>;
 				qcom,pre-scaling = <1 1>;
 				label = "vcoin";
 			};

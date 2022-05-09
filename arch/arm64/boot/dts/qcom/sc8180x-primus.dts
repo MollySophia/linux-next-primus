@@ -26,7 +26,7 @@
 	backlight: backlight {
 		compatible = "pwm-backlight";
 		pwms = <&pmc8180c_lpg 4 1000000>;
-		enable-gpios = <&pmc8180c_gpios 8 GPIO_ACTIVE_HIGH>;
+		enable-gpios = <&pmc8180c_gpios 1 GPIO_ACTIVE_HIGH>;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&bl_pwm_default>;
@@ -36,20 +36,30 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	// gpio-keys {
-	// 	compatible = "gpio-keys";
+	gpio-keys {
+		compatible = "gpio-keys";
 
-	// 	pinctrl-names = "default";
-	// 	pinctrl-0 = <&hall_int_active_state>;
+		pinctrl-names = "default";
+		pinctrl-0 = <&hall_int_active_state>, <&vol_up_pin_a>;
 
-	// 	lid-switch {
-	// 		gpios = <&tlmm 121 GPIO_ACTIVE_HIGH>;
-	// 		linux,input-type = <EV_SW>;
-	// 		linux,code = <SW_LID>;
-	// 		wakeup-source;
-	// 		wakeup-event-action = <EV_ACT_DEASSERTED>;
-	// 	};
-	// };
+		lid {
+			gpios = <&tlmm 121 GPIO_ACTIVE_HIGH>;
+			linux,input-type = <EV_SW>;
+			linux,code = <SW_LID>;
+			wakeup-source;
+			wakeup-event-action = <EV_ACT_DEASSERTED>;
+		};
+
+		volume-up {
+			label = "volume_up";
+			gpios = <&pmc8180_gpios 6 GPIO_ACTIVE_LOW>;
+			linux,input-type = <1>;
+			linux,code = <KEY_VOLUMEUP>;
+			gpio-key,wakeup;
+			debounce-interval = <15>;
+			linux,can-disable;
+		};
+	};
 
 	pmic-glink {
 		compatible = "qcom,sc8180x-pmic-glink", "qcom,pmic-glink";
@@ -465,11 +475,11 @@
 };
 
 &gmu {
-	status = "disabled";
+	status = "okay";
 };
 
 &gpu {
-	status = "disabled";
+	status = "okay";
 
 	zap-shader {
 		memory-region = <&gpu_mem>;
@@ -533,6 +543,21 @@
 		pinctrl-0 = <&kb_int_active_state>;
 
 		vdd-supply = <&vdd_kb_tp_3v3>;
+	};
+};
+
+&i2c19 {
+	status = "okay";
+	clock-frequency = <100000>;
+
+	pinctrl-names = "default";
+	pinctrl-0 = <&i2c19_active>;
+
+	sbs-battery@b {
+		compatible = "sbs,sbs-battery";
+		reg = <0xb>;
+		sbs,i2c-retry-count = <2>;
+		sbs,poll-retry-count = <10>;
 	};
 };
 
@@ -608,6 +633,26 @@
 
 &pmc8180c_lpg {
 	status = "okay";
+};
+
+&pon_pwrkey {
+	status = "okay";
+};
+
+&pon_resin {
+	status = "okay";
+
+	linux,code = <KEY_VOLUMEDOWN>;
+};
+
+&pmc8180_gpios {
+	vol_up_pin_a: vol-up-active {
+		pins = "gpio6";
+		function = "normal";
+		bias-pull-up;
+		input-enable;
+		qcom,drive-strength = <3>;
+	};
 };
 
 &qupv3_id_0 {
@@ -823,6 +868,21 @@
 	};
 };
 
+&sdhc_2 {
+	status = "okay";
+
+	pinctrl-names = "default";
+	pinctrl-0 = < &sdc2_default_state &sdc2_card_det_n>;
+
+	vmmc-supply = <&vreg_l17e_2p9>;
+	vqmmc-supply = <&vreg_l17e_2p9>;
+
+	cd-gpios = <&tlmm 96 GPIO_ACTIVE_LOW>;
+
+	no-1-8-v;
+	cd-inverted;
+};
+
 &tlmm {
 	gpio-reserved-ranges = <0 4>, <47 4>, <126 4>;
 
@@ -992,7 +1052,6 @@
 
 	sdc2_default_state: sdc2-default {
 		clk {
-			pins = "sdc2_clk";
 			bias-disable;
 		};
 
@@ -1012,19 +1071,12 @@
 		function = "gpio";
 		bias-pull-up;
 	};
-};
 
-&sdhc_2 {
-	status = "okay";
+	i2c19_active: i2c19-active-state {
+		pins = "gpio180", "gpio181";
+		function = "qup19";
 
-	pinctrl-names = "default";
-	pinctrl-0 = < &sdc2_default_state &sdc2_card_det_n>;
-
-	vmmc-supply = <&vreg_l17e_2p9>;
-	vqmmc-supply = <&vreg_l17e_2p9>;
-
-	cd-gpios = <&tlmm 96 GPIO_ACTIVE_LOW>;
-
-	no-1-8-v;
-	cd-inverted;
+		bias-pull-up;
+		drive-strength = <2>;
+	};
 };
