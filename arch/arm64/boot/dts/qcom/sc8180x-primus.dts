@@ -27,7 +27,7 @@
 	backlight: backlight {
 		compatible = "pwm-backlight";
 		pwms = <&pmc8180c_lpg 4 1000000>;
-		enable-gpios = <&pmc8180c_gpios 1 GPIO_ACTIVE_HIGH>;
+		enable-gpios = <&pmc8180c_gpios 8 GPIO_ACTIVE_HIGH>;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&bl_pwm_default_state>;
