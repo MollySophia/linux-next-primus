@@ -565,6 +565,7 @@ static int geni_i2c_gpi(struct geni_i2c_dev *gi2c, struct i2c_msg *msg,
 	dmaengine_submit(desc);
 	*buf = dma_buf;
 	*dma_addr_p = addr;
+	*buf = dma_buf;
 
 	return 0;
 
