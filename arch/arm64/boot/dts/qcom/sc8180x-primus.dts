@@ -254,11 +254,11 @@
 		// 	regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		// };
 
-		// vreg_l9c_2p9: ldo9 {
-		// 	regulator-min-microvolt = <2504000>;
-		// 	regulator-max-microvolt = <2904000>;
-		// 	regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
-		// };
+		vreg_l9c_2p9: ldo9 {
+			regulator-min-microvolt = <2904000>;
+			regulator-max-microvolt = <2904000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
 
 		vreg_l10c_3p3: ldo10 {
 			regulator-min-microvolt = <3000000>;
@@ -346,11 +346,11 @@
 		// 	regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		// };
 
-		// vreg_l15e_1p8: ldo15 {
-		// 	regulator-min-microvolt = <1800000>;
-		// 	regulator-max-microvolt = <1800000>;
-		// 	regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
-		// };
+		vreg_l15e_1p8: ldo15 {
+			regulator-min-microvolt = <1800000>;
+			regulator-max-microvolt = <1800000>;
+			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+		};
 
 		vreg_l16e_3p0: ldo16 {
 			regulator-min-microvolt = <3072000>;
@@ -804,6 +804,25 @@
 };
 
 &ufs_mem_phy {
+	status = "okay";
+
+	vdda-phy-supply = <&vreg_l5e_0p88>;
+	vdda-pll-supply = <&vreg_l3c_1p2>;
+};
+
+&ufs1_mem_hc {
+	status = "okay";
+
+	reset-gpios = <&tlmm 191 GPIO_ACTIVE_LOW>;
+
+	vcc-supply = <&vreg_l9c_2p9>;
+	vcc-max-microamp = <155000>;
+
+	vccq2-supply = <&vreg_l15e_1p8>;
+	vccq2-max-microamp = <425000>;
+};
+
+&ufs1_mem_phy {
 	status = "okay";
 
 	vdda-phy-supply = <&vreg_l5e_0p88>;
