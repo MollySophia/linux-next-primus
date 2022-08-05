@@ -233,11 +233,14 @@
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
-		vreg_l4c_3p3: ldo4 {
-			regulator-min-microvolt = <3008000>;
-			regulator-max-microvolt = <3008000>;
+		vreg_l4c_3p3: ldo4 { // VDD_TS
+			regulator-min-microvolt = <3296000>;
+			regulator-max-microvolt = <3304000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-boot-on;
+			regulator-always-on;
 		};
+
 		// vreg_l6c: ldo6 {
 		// 	regulator-min-microvolt = <1800000>;
 		// 	regulator-max-microvolt = <2950000>;
@@ -322,10 +325,12 @@
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
 		};
 
-		vreg_l12e: ldo12 {
+		vreg_l12e_1p8: ldo12 { //TS_VDDIO
 			regulator-min-microvolt = <1800000>;
 			regulator-max-microvolt = <1800000>;
 			regulator-initial-mode = <RPMH_REGULATOR_MODE_HPM>;
+			regulator-always-on;
+			regulator-boot-on;
 		};
 
 		// vreg_l14e_1p8: ldo14 {
@@ -373,23 +378,18 @@
 
 &i2c1 {
 	status = "okay";
-	clock-frequency = <100000>;
+	clock-frequency = <400000>;
 
 	pinctrl-names = "default";
-	pinctrl-0 = <&i2c1_active>;
+	pinctrl-0 = <&i2c1_active>, <&ts_int_active>;
 
-	hid@10 {
+	touchscreen@10 {
 		compatible = "hid-over-i2c";
 		reg = <0x10>;
-		pinctrl-names = "default";
-		pinctrl-0 = <&ts_int_l>, <&ts_reset_l>;
+		hid-descr-addr = <0x1>;
 
 		interrupt-parent = <&tlmm>;
 		interrupts = <122 IRQ_TYPE_LEVEL_LOW>;
-		// interrupts-extended = <&tlmm 122 IRQ_TYPE_LEVEL_LOW>;
-
-		post-power-on-delay-ms = <20>;
-		hid-descr-addr = <0x0001>;
 	};
 };
 
@@ -400,7 +400,7 @@
 	pinctrl-names = "default";
 	pinctrl-0 = <&i2c7_active>, <&i2c7_hid_active>;
 
-	hid@3a {
+	keyboard@3a {
 		compatible = "hid-over-i2c";
 		reg = <0x3a>;
 		hid-descr-addr = <0x1>;
@@ -409,7 +409,7 @@
 		interrupts = <37 IRQ_TYPE_LEVEL_LOW>;
 	};
 
-	hid@15 {
+	trackpad@15 {
 		compatible = "hid-over-i2c";
 		reg = <0x15>;
 		hid-descr-addr = <0x1>;
@@ -429,6 +429,7 @@
 	sbs-battery@b {
 		compatible = "sbs,sbs-battery";
 		reg = <0xb>;
+		sbs,battery-detect-gpios = <&tlmm 97 GPIO_ACTIVE_LOW>;
 		sbs,i2c-retry-count = <2>;
 		sbs,poll-retry-count = <10>;
 	};
@@ -948,11 +949,11 @@
 		pins = "gpio114", "gpio115";
 		function = "qup1";
 
-		bias-pull-up = <1>;
+		bias-pull-up;
 		drive-strength = <2>;
 	};
 
-	ts_int_l: ts-int-pin {
+	ts_int_active: ts-int-active-state {
 		pins = "gpio122";
 		function = "gpio";
 
@@ -961,7 +962,7 @@
 		drive-strength = <2>;
 	};
 
-	ts_reset_l: ts-reset-pin {
+	ts_reset_active: ts-reset-active-state {
 		pins = "gpio54";
 		function = "gpio";
 
