@@ -1411,6 +1411,46 @@ static struct clk_branch gcc_aggre_ufs_card_axi_hw_ctl_clk = {
 	},
 };
 
+static struct clk_branch gcc_aggre_ufs_card_2_axi_clk = {
+	.halt_reg = 0xa20c0,
+	.halt_check = BRANCH_HALT,
+	.hwcg_reg = 0xa20c0,
+	.hwcg_bit = 1,
+	.clkr = {
+		.enable_reg = 0xa20c0,
+		.enable_mask = BIT(0),
+		.hw.init = &(struct clk_init_data){
+			.name = "gcc_aggre_ufs_card_2_axi_clk",
+			.parent_hws = (const struct clk_hw *[]){
+				      &gcc_ufs_card_2_axi_clk_src.clkr.hw
+			},
+			.num_parents = 1,
+			.flags = CLK_SET_RATE_PARENT,
+			.ops = &clk_branch2_ops,
+		},
+	},
+};
+
+static struct clk_branch gcc_aggre_ufs_card_2_axi_hw_ctl_clk = {
+	.halt_reg = 0xa20c0,
+	.halt_check = BRANCH_HALT,
+	.hwcg_reg = 0xa20c0,
+	.hwcg_bit = 1,
+	.clkr = {
+		.enable_reg = 0xa20c0,
+		.enable_mask = BIT(1),
+		.hw.init = &(struct clk_init_data){
+			.name = "gcc_aggre_ufs_card_2_axi_hw_ctl_clk",
+			.parent_hws = (const struct clk_hw *[]){
+				      &gcc_aggre_ufs_card_2_axi_clk.clkr.hw
+			},
+			.num_parents = 1,
+			.flags = CLK_SET_RATE_PARENT,
+			.ops = &clk_branch_simple_ops,
+		},
+	},
+};
+
 static struct clk_branch gcc_aggre_ufs_phy_axi_clk = {
 	.halt_reg = 0x770c0,
 	.halt_check = BRANCH_HALT,
@@ -3291,7 +3331,7 @@ static struct clk_branch gcc_ufs_card_2_phy_aux_clk = {
 
 static struct clk_branch gcc_ufs_card_2_rx_symbol_0_clk = {
 	.halt_reg = 0xa201c,
-	.halt_check = BRANCH_HALT,
+	.halt_check = BRANCH_HALT_SKIP,
 	.clkr = {
 		.enable_reg = 0xa201c,
 		.enable_mask = BIT(0),
@@ -3304,7 +3344,7 @@ static struct clk_branch gcc_ufs_card_2_rx_symbol_0_clk = {
 
 static struct clk_branch gcc_ufs_card_2_rx_symbol_1_clk = {
 	.halt_reg = 0xa20ac,
-	.halt_check = BRANCH_HALT,
+	.halt_check = BRANCH_HALT_SKIP,
 	.clkr = {
 		.enable_reg = 0xa20ac,
 		.enable_mask = BIT(0),
@@ -3317,7 +3357,7 @@ static struct clk_branch gcc_ufs_card_2_rx_symbol_1_clk = {
 
 static struct clk_branch gcc_ufs_card_2_tx_symbol_0_clk = {
 	.halt_reg = 0xa2018,
-	.halt_check = BRANCH_HALT,
+	.halt_check = BRANCH_HALT_SKIP,
 	.clkr = {
 		.enable_reg = 0xa2018,
 		.enable_mask = BIT(0),
@@ -4272,6 +4312,8 @@ static struct gdsc usb30_mp_gdsc = {
 
 static struct clk_regmap *gcc_sc8180x_clocks[] = {
 	[GCC_AGGRE_NOC_PCIE_TBU_CLK] = &gcc_aggre_noc_pcie_tbu_clk.clkr,
+	[GCC_AGGRE_UFS_CARD_2_AXI_CLK] = &gcc_aggre_ufs_card_2_axi_clk.clkr,
+	[GCC_AGGRE_UFS_CARD_2_AXI_HW_CTL_CLK] = &gcc_aggre_ufs_card_2_axi_hw_ctl_clk.clkr,
 	[GCC_AGGRE_UFS_CARD_AXI_CLK] = &gcc_aggre_ufs_card_axi_clk.clkr,
 	[GCC_AGGRE_UFS_CARD_AXI_HW_CTL_CLK] = &gcc_aggre_ufs_card_axi_hw_ctl_clk.clkr,
 	[GCC_AGGRE_UFS_PHY_AXI_CLK] = &gcc_aggre_ufs_phy_axi_clk.clkr,
