@@ -140,6 +140,33 @@ static const struct tile_info sc8180x_tile_info[] = {
 		.intr_detection_bit = -1,		\
 		.intr_detection_width = -1,		\
 	}
+
+#define UFS0_RESET(pg_name)				\
+	{						\
+		.name = #pg_name,			\
+		.pins = pg_name##_pins,			\
+		.npins = (unsigned int)ARRAY_SIZE(pg_name##_pins),	\
+		.ctl_reg = 0xc7000,			\
+		.io_reg = 0xc7004,			\
+		.intr_cfg_reg = 0,			\
+		.intr_status_reg = 0,			\
+		.intr_target_reg = 0,			\
+		.tile = SOUTH,				\
+		.mux_bit = -1,				\
+		.pull_bit = 3,				\
+		.drv_bit = 0,				\
+		.oe_bit = -1,				\
+		.in_bit = -1,				\
+		.out_bit = 0,				\
+		.intr_enable_bit = -1,			\
+		.intr_status_bit = -1,			\
+		.intr_target_bit = -1,			\
+		.intr_raw_status_bit = -1,		\
+		.intr_polarity_bit = -1,		\
+		.intr_detection_bit = -1,		\
+		.intr_detection_width = -1,		\
+	}
+
 static const struct pinctrl_pin_desc sc8180x_pins[] = {
 	PINCTRL_PIN(0, "GPIO_0"),
 	PINCTRL_PIN(1, "GPIO_1"),
@@ -332,9 +359,10 @@ static const struct pinctrl_pin_desc sc8180x_pins[] = {
 	PINCTRL_PIN(188, "GPIO_188"),
 	PINCTRL_PIN(189, "GPIO_189"),
 	PINCTRL_PIN(190, "UFS_RESET"),
-	PINCTRL_PIN(191, "SDC2_CLK"),
-	PINCTRL_PIN(192, "SDC2_CMD"),
-	PINCTRL_PIN(193, "SDC2_DATA"),
+	PINCTRL_PIN(191, "UFS0_RESET"),
+	PINCTRL_PIN(192, "SDC2_CLK"),
+	PINCTRL_PIN(193, "SDC2_CMD"),
+	PINCTRL_PIN(194, "SDC2_DATA"),
 };
 
 #define DECLARE_MSM_GPIO_PINS(pin) \
@@ -531,9 +559,10 @@ DECLARE_MSM_GPIO_PINS(188);
 DECLARE_MSM_GPIO_PINS(189);
 
 static const unsigned int ufs_reset_pins[] = { 190 };
-static const unsigned int sdc2_clk_pins[] = { 191 };
-static const unsigned int sdc2_cmd_pins[] = { 192 };
-static const unsigned int sdc2_data_pins[] = { 193 };
+static const unsigned int ufs0_reset_pins[] = { 191 };
+static const unsigned int sdc2_clk_pins[] = { 192 };
+static const unsigned int sdc2_cmd_pins[] = { 193 };
+static const unsigned int sdc2_data_pins[] = { 194 };
 
 enum sc8180x_functions {
 	msm_mux_adsp_ext,
@@ -1567,9 +1596,10 @@ static const struct msm_pingroup sc8180x_groups[] = {
 	[188] = PINGROUP_OFFSET(188, SOUTH, 0x1e000, _, _, _, _, _, _, _, _, _),
 	[189] = PINGROUP_OFFSET(189, SOUTH, 0x1e000, dp_hot, _, _, _, _, _, _, _, _),
 	[190] = UFS_RESET(ufs_reset),
-	[191] = SDC_QDSD_PINGROUP(sdc2_clk, 0x4b2000, 14, 6),
-	[192] = SDC_QDSD_PINGROUP(sdc2_cmd, 0x4b2000, 11, 3),
-	[193] = SDC_QDSD_PINGROUP(sdc2_data, 0x4b2000, 9, 0),
+	[191] = UFS0_RESET(ufs0_reset),
+	[192] = SDC_QDSD_PINGROUP(sdc2_clk, 0x4b2000, 14, 6),
+	[193] = SDC_QDSD_PINGROUP(sdc2_cmd, 0x4b2000, 11, 3),
+	[194] = SDC_QDSD_PINGROUP(sdc2_data, 0x4b2000, 9, 0),
 };
 
 static const int sc8180x_acpi_reserved_gpios[] = {
@@ -1605,7 +1635,7 @@ static struct msm_pinctrl_soc_data sc8180x_pinctrl = {
 	.nfunctions = ARRAY_SIZE(sc8180x_functions),
 	.groups = sc8180x_groups,
 	.ngroups = ARRAY_SIZE(sc8180x_groups),
-	.ngpios = 191,
+	.ngpios = 192,
 	.wakeirq_map = sc8180x_pdc_map,
 	.nwakeirq_map = ARRAY_SIZE(sc8180x_pdc_map),
 };
