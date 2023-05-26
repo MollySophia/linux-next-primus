@@ -40,7 +40,7 @@
 		compatible = "gpio-keys";
 
 		pinctrl-names = "default";
-		pinctrl-0 = <&lid_pin_active>, <&vol_up_pin_a>;
+		pinctrl-0 = <&hall_int_active_state>, <&vol_up_pin_a>;
 
 		lid {
 			gpios = <&tlmm 121 GPIO_ACTIVE_HIGH>;
@@ -376,23 +376,6 @@
 	};
 };
 
-&i2c1 {
-	status = "okay";
-	clock-frequency = <400000>;
-
-	pinctrl-names = "default";
-	pinctrl-0 = <&i2c1_active>, <&ts_int_active>;
-
-	touchscreen@10 {
-		compatible = "hid-over-i2c";
-		reg = <0x10>;
-		hid-descr-addr = <0x1>;
-
-		interrupt-parent = <&tlmm>;
-		interrupts = <122 IRQ_TYPE_LEVEL_LOW>;
-	};
-};
-
 &i2c7 {
 	status = "okay";
 	clock-frequency = <400000>;
@@ -449,7 +432,7 @@
 		hid-descr-addr = <0x1>;
 
 		vdd-supply = <&vreg_l4c_3p3>;
-		vddl-supply = <&vreg_l12e>;
+		vddl-supply = <&vreg_l12e_1p8>;
 
 		post-power-on-delay-ms = <20>;
 
@@ -593,8 +576,10 @@
 	status = "okay";
 };
 
-&pon_pwrkey {
-	status = "okay";
+&pon {
+	pwrkey {
+		status = "okay";
+	};
 };
 
 &pon_resin {

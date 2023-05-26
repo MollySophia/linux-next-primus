@@ -66,15 +66,6 @@
 				bias-pull-up;
 				status = "disabled";
 			};
-
-			pon_resin: resin {
-				compatible = "qcom,pm8941-resin";
-				interrupts = <0x0 0x8 0x1 IRQ_TYPE_EDGE_BOTH>;
-				debounce = <15625>;
-				bias-pull-up;
-
-				status = "disabled";
-			};
 		};
 
 		pm6125_temp: temp-alarm@2400 {

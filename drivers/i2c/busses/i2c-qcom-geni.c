@@ -101,6 +101,13 @@ struct geni_i2c_dev {
 	bool abort_done;
 };
 
+struct geni_i2c_desc {
+	bool has_core_clk;
+	char *icc_ddr;
+	bool no_dma_support;
+	unsigned int tx_fifo_depth;
+};
+
 struct geni_i2c_err_log {
 	int err;
 	const char *msg;
