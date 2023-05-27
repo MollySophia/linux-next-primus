@@ -159,6 +159,12 @@ static const struct dmi_system_id efi_reboot_broken_table[] = {
 			DMI_MATCH(DMI_PRODUCT_SKU, "Surface_Pro_X_H_1876"),
 		},
 	},
+	{
+		.ident = "Qualcomm SC8180x Primus",
+		.matches = {
+			DMI_MATCH(DMI_PRODUCT_FAMILY, "SC8180X"),
+		},
+	},
 	{ } /* terminator */
 };
 
