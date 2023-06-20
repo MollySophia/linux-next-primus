@@ -43,7 +43,7 @@
 		pinctrl-0 = <&hall_int_active_state>, <&vol_up_pin_a>;
 
 		lid {
-			gpios = <&tlmm 121 GPIO_ACTIVE_HIGH>;
+			gpios = <&tlmm 121 GPIO_ACTIVE_LOW>;
 			linux,input-type = <EV_SW>;
 			linux,code = <SW_LID>;
 			wakeup-source;
@@ -813,7 +813,7 @@
 		function = "gpio";
 
 		input-enable;
-		bias-disable;
+		bias-pull-up;
 	};
 
 	kb_int_active_state: kb-int-active-state {
