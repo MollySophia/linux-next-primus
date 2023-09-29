@@ -36,20 +36,20 @@
 		stdout-path = "serial0:115200n8";
 	};
 
-	gpio-keys {
-		compatible = "gpio-keys";
+	// gpio-keys {
+	// 	compatible = "gpio-keys";
 
-		pinctrl-names = "default";
-		pinctrl-0 = <&hall_int_active_state>;
+	// 	pinctrl-names = "default";
+	// 	pinctrl-0 = <&hall_int_active_state>;
 
-		lid-switch {
-			gpios = <&tlmm 121 GPIO_ACTIVE_HIGH>;
-			linux,input-type = <EV_SW>;
-			linux,code = <SW_LID>;
-			wakeup-source;
-			wakeup-event-action = <EV_ACT_DEASSERTED>;
-		};
-	};
+	// 	lid-switch {
+	// 		gpios = <&tlmm 121 GPIO_ACTIVE_HIGH>;
+	// 		linux,input-type = <EV_SW>;
+	// 		linux,code = <SW_LID>;
+	// 		wakeup-source;
+	// 		wakeup-event-action = <EV_ACT_DEASSERTED>;
+	// 	};
+	// };
 
 	pmic-glink {
 		compatible = "qcom,sc8180x-pmic-glink", "qcom,pmic-glink";
