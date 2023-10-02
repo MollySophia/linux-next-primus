@@ -635,14 +635,10 @@
 	status = "okay";
 };
 
-&pon_pwrkey {
-	status = "okay";
-};
-
-&pon_resin {
-	status = "okay";
-
-	linux,code = <KEY_VOLUMEDOWN>;
+&pon {
+	pwrkey {
+		status = "okay";
+	};
 };
 
 &pmc8180_gpios {
